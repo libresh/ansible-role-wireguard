@@ -56,8 +56,6 @@
 - name: Generate WireGuard private key
   shell: "wg genkey"
   register: wg_private_key_result
-  with_inventory_hostnames:
-    - vpn
   when: not wg_conf.stat.exists
   changed_when: false
   tags:
@@ -76,8 +74,6 @@
   register: wg_public_key_result
   when: not private_key_file_stat.stat.exists
   changed_when: false
-  with_inventory_hostnames:
-    - vpn
   tags:
     - wg-generate-keys
 
