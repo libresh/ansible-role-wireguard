@@ -72,7 +72,6 @@
 - name: Derive WireGuard public key
   shell: "echo '{{ wg_private_key }}' | wg pubkey"
   register: wg_public_key_result
-  when: not private_key_file_stat.stat.exists
   changed_when: false
   tags:
     - wg-generate-keys
