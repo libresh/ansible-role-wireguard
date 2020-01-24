@@ -1,0 +1,49 @@
+- name: Register if config/private key already exists on target host
+  stat:
+    path: "{{ wireguard_remote_directory }}/{{ item.key }}.conf"
+  register: config_file_stat
+  tags:
+    - wg-generate-keys
+    - wg-config
+
+- block:
+  - name: Generate WireGuard private key
+    shell: "wg genkey"
+    register: wg_private_key_result
+    tags:
+      - wg-generate-keys
+
+  - name: Set private key fact
+    set_fact:
+      private_key: "{{ wg_private_key_result.stdout }}"
+    tags:
+      - wg-generate-keys
+  when: not config_file_stat.stat.exists
+
+- block:
+  - name: Read WireGuard config file
+    slurp:
+      src: "{{ wireguard_remote_directory }}/{{ item.key }}.conf"
+    register: wg_config
+    tags:
+      - wg-config
+
+  - name: Set private key fact
+    set_fact:
+      private_key: "{{ wg_config['content'] | b64decode | regex_findall('PrivateKey = (.*)') | first }}"
+    tags:
+      - wg-config
+  when: config_file_stat.stat.exists
+
+- name: Derive WireGuard public key
+  shell: "echo '{{ private_key }}' | wg pubkey"
+  register: wg_public_key_result
+  changed_when: false
+  tags:
+    - wg-config
+
+- name: Set public and private key facts
+  set_fact:
+    wireguard_interfaces: "{{ wireguard_interfaces|combine({item.key: {'private_key': private_key, 'public_key': wg_public_key_result.stdout}}, recursive=True) }}"
+  tags:
+    - wg-config

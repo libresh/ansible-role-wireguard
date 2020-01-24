@@ -1,59 +1,59 @@
 #jinja2: lstrip_blocks:"True",trim_blocks:"True"
 [Interface]
 # {{ inventory_hostname }}
-Address = {{hostvars[inventory_hostname].wireguard_address}}
-PrivateKey = {{private_key}}
-ListenPort = {{wireguard_port}}
-{% if hostvars[inventory_hostname].wireguard_dns is defined %}
-DNS = {{hostvars[inventory_hostname].wireguard_dns}}
+Address = {{item.value.address}}
+PrivateKey = {{item.value.private_key}}
+ListenPort = {{item.value.port}}
+{% if item.value.dns is defined %}
+DNS = {{item.value.dns}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_fwmark is defined %}
-FwMark = {{hostvars[inventory_hostname].wireguard_fwmark}}
+{% if item.value.fwmark is defined %}
+FwMark = {{item.value.fwmark}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_mtu is defined %}
-MTU = {{hostvars[inventory_hostname].wireguard_mtu}}
+{% if item.value.mtu is defined %}
+MTU = {{item.value.mtu}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_table is defined %}
-Table = {{hostvars[inventory_hostname].wireguard_table}}
+{% if item.value.table is defined %}
+Table = {{item.value.table}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_preup is defined %}
-PreUp = {{hostvars[inventory_hostname].wireguard_preup}}
+{% if item.value.preup is defined %}
+PreUp = {{item.value.preup}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_predown is defined %}
-PreDown = {{hostvars[inventory_hostname].wireguard_predown}}
+{% if item.value.predown is defined %}
+PreDown = {{item.value.predown}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_postup is defined %}
-PostUp = {{hostvars[inventory_hostname].wireguard_postup}}
+{% if item.value.postup is defined %}
+PostUp = {{item.value.postup}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_postdown is defined %}
-PostDown = {{hostvars[inventory_hostname].wireguard_postdown}}
+{% if item.value.postdown is defined %}
+PostDown = {{item.value.postdown}}
 {% endif %}
-{% if hostvars[inventory_hostname].wireguard_save_config is defined %}
+{% if item.value.save_config is defined %}
 SaveConfig = true
 {% endif %}
 {% for host in ansible_play_hosts %}
-  {% if host != inventory_hostname %}
+  {% if host != inventory_hostname and hostvars[host].wireguard_interfaces[item.key] is defined %}
   
     [Peer]
     # {{ host }}
-    PublicKey = {{hostvars[host].public_key}}
-    {% if hostvars[host].wireguard_allowed_ips is defined %}
-    AllowedIPs = {{hostvars[host].wireguard_allowed_ips}}
+    PublicKey = {{hostvars[host].wireguard_interfaces[item.key].public_key}}
+    {% if hostvars[host].wireguard_interfaces[item.key].allowed_ips is defined %}
+    AllowedIPs = {{hostvars[host].wireguard_interfaces[item.key].allowed_ips}}
     {% else %}
-    AllowedIPs = {{hostvars[host].wireguard_ip}}/32
+    AllowedIPs = {{hostvars[host].wireguard_interfaces[item.key].ip}}/32
     {% endif %}
-    {% if hostvars[host].wireguard_persistent_keepalive is defined %}
-    PersistentKeepalive = {{hostvars[host].wireguard_persistent_keepalive}}
+    {% if hostvars[host].wireguard_interfaces[item.key].persistent_keepalive is defined %}
+    PersistentKeepalive = {{hostvars[host].wireguard_interfaces[item.key].persistent_keepalive}}
     {% endif %}
-    {% if hostvars[host].wireguard_port is defined and hostvars[host].wireguard_port is number %}
-      {% if hostvars[host].wireguard_endpoint is defined and hostvars[host].wireguard_endpoint != "" %}
-    Endpoint = {{hostvars[host].wireguard_endpoint}}:{{hostvars[host].wireguard_port}}
+    {% if hostvars[host].wireguard_interfaces[item.key].port is defined and hostvars[host].wireguard_interfaces[item.key].port is number %}
+      {% if hostvars[host].wireguard_interfaces[item.key].endpoint is defined and hostvars[host].wireguard_interfaces[item.key].endpoint != "" %}
+    Endpoint = {{hostvars[host].wireguard_interfaces[item.key].endpoint}}:{{hostvars[host].wireguard_interfaces[item.key].port}}
       {% else %}
-    Endpoint = {{host}}:{{hostvars[host].wireguard_port}}
+    Endpoint = {{host}}:{{hostvars[host].wireguard_interfaces[item.key].port}}
       {% endif %}
-    {% elif hostvars[host].wireguard_endpoint is defined and hostvars[host].wireguard_endpoint != "" %}
-    Endpoint = {{hostvars[host].wireguard_endpoint}}:{{wireguard_port}}
-    {% elif hostvars[host].wireguard_endpoint == "" %}
+    {% elif hostvars[host].wireguard_interfaces[item.key].endpoint is defined and hostvars[host].wireguard_interfaces[item.key].endpoint != "" %}
+    Endpoint = {{hostvars[host].wireguard_interfaces[item.key].endpoint}}:{{wireguard_port}}
+    {% elif hostvars[host].wireguard_interfaces[item.key].endpoint == "" %}
     # No endpoint defined for this peer
     {% else %}
     Endpoint = {{host}}:{{wireguard_port}}

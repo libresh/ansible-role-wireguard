@@ -1,0 +1,25 @@
+---
+- name: Set WireGuard IP (without mask)
+  set_fact:
+    wireguard_interfaces: "{{ wireguard_interfaces|combine({item.key: {'ip': item.value.address.split('/')[0]}}, recursive=True) }}"
+  loop: "{{ wireguard_interfaces | dict2items}}"
+
+- include_tasks: read-private-key.yml
+  loop: "{{ wireguard_interfaces | dict2items}}"
+
+- debug:
+    var: wireguard_interfaces
+    verbosity: 2
+
+- name: Generate WireGuard configuration file
+  template:
+    src: wg.conf.j2
+    dest: "{{ wireguard_remote_directory }}/{{ item.key }}.conf"
+    owner: root
+    group: root
+    mode: 0600
+  tags:
+    - wg-config
+  notify:
+    - restart wireguard
+  loop: "{{ wireguard_interfaces | dict2items}}"

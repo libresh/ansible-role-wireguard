@@ -1,0 +1,36 @@
+---
+- name: Gather instance facts
+  setup:
+
+- include_tasks: "setup-{{ ansible_distribution|lower }}.yml"
+
+- name: Install WireGuard
+  package:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - wireguard-dkms
+    - wireguard-tools
+  tags:
+    - wg-install
+
+- name: Enable WireGuard kernel module
+  modprobe:
+    name: wireguard
+    state: present
+  register: wireguard_module_enabled
+  until:  wireguard_module_enabled is succeeded
+  retries: 10
+  delay: 10
+  failed_when: wireguard_module_enabled is failure
+  tags:
+    - wg-install
+
+- name: Create WireGuard configuration directory
+  file:
+    dest: "{{ wireguard_remote_directory }}"
+    state: directory
+    mode: 0700
+  tags:
+    - wg-config
